@@ -53,3 +53,42 @@ version: v1
               { 
                 "token":"30001"
               }
+/getquote:
+  post:
+    headers:
+      Authorization:
+        example: 9c660390-d299-11e7-b9ef-02422b93d8b3 
+      Content-Type:
+        example: application/json
+      Accept:
+        example: application/json
+    body: 
+      application/json:
+        schema: |
+          {
+            "title": "Request",
+            "type": "object",
+            "properties":
+            {
+              "symbol": 
+              {
+                "type": "string",
+                "maxLength": 10
+              }
+             }
+          }
+    responses: 
+      200:
+        body: 
+          application/json:
+            example: |
+              {
+              "2017-11-24 13:00:00": 
+                {
+                  "1. open": "83.2500",
+                  "2. high": "83.3000",
+                  "3. low": "83.2100",
+                  "4. close": "83.2600",
+                  "5. volume": "1508236"
+                }
+              }                

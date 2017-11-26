@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+<mule xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:spring="http://www.springframework.org/schema/beans" 
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
@@ -8,16 +8,21 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
-http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd">
     <http:request-config name="HTTP_Request_Configuration" protocol="HTTPS" host="maps.googleapis.com" port="443" basePath="/maps/api/" doc:name="HTTP Request Configuration"/>
+    <sfdc:config doc:name="Salesforce" name="Salesforce" password="22TheMoon" securityToken="${sfdc.securityToken}" username="${sfdc.user}">
+        <sfdc:connection-pooling-profile exhaustedAction="WHEN_EXHAUSTED_GROW" initialisationPolicy="INITIALISE_ONE"/>
+    </sfdc:config>
+    <http:request-config name="HTTP_Get_Quote_Configuration" protocol="HTTPS" host="www.alphavantage.co" port="443" doc:name="HTTP Request Configuration"/>
     
     <flow name="post:/register:application/json:controlled-stock-api-config">
+        <json:json-to-object-transformer returnClass="java.lang.Object" doc:name="JSON to Object"/>
         <set-variable variableName="inputPayload" value="#[payload]" mimeType="application/json" doc:name="Store input payload"/>
-        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
         <set-variable variableName="addressParameter" value="#[message.payload.street],+#[message.payload.state]" doc:name="Form address parameter"/>
         <set-variable variableName="postCode" value="#[payload.postcode]" doc:name="Set postcode"/>
         <logger message="address: #[flowVars.addressParameter] #[flowVars.postCode]" level="INFO" doc:name="Logger"/>
-        <http:request config-ref="HTTP_Request_Configuration" path="geocode/json" method="GET" doc:name="HTTP">
+        <http:request config-ref="HTTP_Request_Configuration" path="geocode/json" method="GET" doc:name="HTTP Address Validator">
             <http:request-builder>
                 <http:query-param paramName="key" value="AIzaSyACB4Pz92_elFHueatQeE24gU-yH1zaNzc"/>
                 <http:query-param paramName="address" value="#[flowVars.addressParameter]"/>
@@ -28,9 +33,7 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
         <logger message="#[payload.status]" level="INFO" doc:name="Logger"/>
         <choice doc:name="Address Validation Result">
             <when expression="#[payload.status == 'OK']">
-                <set-payload value="{ 
-  &quot;token&quot;:&quot;30001&quot;
-}" doc:name="Set Payload"/>
+                <flow-ref name="EnterUserDetailsFlow" doc:name="EnterUserDetailsFlow"/>
             </when>
             <otherwise>
                 <set-property propertyName="http.status" value="422" doc:name="Property"/>
@@ -54,4 +57,46 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 <!--         </dw:transform-message> -->
 <!--         <logger message="sf payload: #[payload]" level="INFO" doc:name="Logger"/> -->
     </flow>
+    <flow name="EnterUserDetailsFlow">
+        <set-variable variableName="uuid" value="#[function:uuid]" doc:name="Set new uuid"/>
+            <dw:transform-message doc:name="Transform Message" metadata:id="ba4036fc-be96-4760-b7c0-7f3ee975339b">
+            <dw:input-payload mimeType="application/java"/>
+            <dw:input-variable doc:sample="sample_data/json.json" variableName="inputPayload" mimeType="application/java"/>
+            <dw:input-variable mimeType="application/java" variableName="uuid"/>
+            <dw:set-payload><![CDATA[%dw 1.0
+
+%output application/java
+---
+{
+	FirstName: flowVars.inputPayload.firstname,
+	LastName : flowVars.inputPayload.lastname,
+	MailingPostalCode : flowVars.inputPayload.postcode,
+	MailingState : flowVars.inputPayload.state,
+	MailingStreet: flowVars.inputPayload.street,
+	Department: flowVars.uuid
+}]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="sf payload: #[payload]" level="INFO" doc:name="Logger"/>
+        
+        <sfdc:create-single config-ref="Salesforce" doc:name="Create Salesforce Contact" type="Contact">
+        </sfdc:create-single>        
+        
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+        
+        <set-payload value="{    &quot;token&quot;:  &quot;#[flowVars.uuid]&quot; }" doc:name="Set Payload"/>
+    </flow>
+   <flow name="post:/getquote:application/json:controlled-stock-api-config">
+        <json:json-to-object-transformer doc:name="JSON to Object" returnClass="java.lang.Object"/>
+        <logger message="Symbol: #[message.payload.symbol]" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Get_Quote_Configuration" path="query" method="GET" doc:name="HTTP Get Quote">
+            <http:request-builder>
+                <http:query-param paramName="function" value="TIME_SERIES_INTRADAY"/>
+                <http:query-param paramName="interval" value="1min"/>
+                <http:query-param paramName="apikey" value="DNLD7K5FBZTY8SEE"/>
+                <http:query-param paramName="symbol" value="#[payload.symbol]"/>
+            </http:request-builder>
+        </http:request>
+<!--         <set-payload value="{&#xA;&quot;2017-11-24 13:00:00&quot;: &#xA;  {&#xA;    &quot;1. open&quot;: &quot;83.2500&quot;,&#xA;    &quot;2. high&quot;: &quot;83.3000&quot;,&#xA;    &quot;3. low&quot;: &quot;83.2100&quot;,&#xA;    &quot;4. close&quot;: &quot;83.2600&quot;,&#xA;    &quot;5. volume&quot;: &quot;1508236&quot;&#xA;  }&#xA;}" doc:name="Set Payload"/> -->
+    </flow>
+    
 </mule>

@@ -25,7 +25,13 @@
 				<extensions>true</extensions>
 				<configuration>
                     <copyToAppsDirectory>true</copyToAppsDirectory>
-				</configuration>
+				<inclusions>
+                        <inclusion>
+                            <groupId>org.mule.modules</groupId>
+                            <artifactId>mule-module-sfdc</artifactId>
+                        </inclusion>
+                    </inclusions>
+                </configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -148,6 +154,11 @@
             <version>${mule.version}</version>
             <scope>provided</scope>
         </dependency>
+    <dependency>
+            <groupId>org.mule.modules</groupId>
+            <artifactId>mule-module-sfdc</artifactId>
+            <version>8.3.1</version>
+        </dependency>
     </dependencies>
 
 	<repositories>
@@ -162,6 +173,11 @@
             <name>MuleSoft Releases Repository</name>
             <url>http://repository.mulesoft.org/releases/</url>
             <layout>default</layout>
+        </repository>
+    <repository>
+            <id>mule-ee-releases</id>
+            <name>MuleEE Releases Repository</name>
+            <url>https://repository-master.mulesoft.org/nexus/content/repositories/releases-ee/</url>
         </repository>
     </repositories>
     <pluginRepositories>

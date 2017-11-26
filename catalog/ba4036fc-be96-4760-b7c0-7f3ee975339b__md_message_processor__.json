@@ -3,6 +3,16 @@
         "messagePayload": {
             "connectorName": "#_custom_mule_metadata_type_#",
             "typeId": "MAP"
+        },
+        "flowVariables": {
+            "inputPayload": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "MAP"
+            },
+            "uuid": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "String"
+            }
         }
     },
     "outputMessageMetadata": {},
