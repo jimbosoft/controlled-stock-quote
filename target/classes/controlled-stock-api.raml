@@ -1,0 +1,55 @@
+#%RAML 1.0
+title: stock-quotes
+version: v1
+
+/register:
+  post:
+    headers: 
+      Content-Type:
+        example: application/json
+      Accept:
+        example: application/json
+    body: 
+      application/json:
+        schema: |
+          {
+            "title": "Request",
+            "type": "object",
+            "properties":
+            {
+              "firstname": 
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              "lastname": 
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              "street": 
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              "postcode": 
+              {
+                "type": "string",
+                "maxLength": 4
+              },
+              "state": 
+              {
+                "type": "string",
+                 "maxLength": 3
+              }
+            },
+              "required":["firstname", "lastname", "street", "postcode", "state"]
+          }
+    responses: 
+      200:
+        body: 
+          application/json:
+            example: |
+              { 
+                "token":"30001"
+              }

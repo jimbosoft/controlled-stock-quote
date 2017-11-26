@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    <http:request-config name="HTTP_Request_Configuration" protocol="HTTPS" host="maps.googleapis.com" port="443" basePath="/maps/api/" doc:name="HTTP Request Configuration"/>
+    
+    <flow name="post:/register:application/json:controlled-stock-api-config">
+        <set-variable variableName="inputPayload" value="#[payload]" mimeType="application/json" doc:name="Store input payload"/>
+        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <set-variable variableName="addressParameter" value="#[message.payload.street],+#[message.payload.state]" doc:name="Form address parameter"/>
+        <set-variable variableName="postCode" value="#[payload.postcode]" doc:name="Set postcode"/>
+        <logger message="address: #[flowVars.addressParameter] #[flowVars.postCode]" level="INFO" doc:name="Logger"/>
+        <http:request config-ref="HTTP_Request_Configuration" path="geocode/json" method="GET" doc:name="HTTP">
+            <http:request-builder>
+                <http:query-param paramName="key" value="AIzaSyACB4Pz92_elFHueatQeE24gU-yH1zaNzc"/>
+                <http:query-param paramName="address" value="#[flowVars.addressParameter]"/>
+                <http:query-param paramName="components" value="postal_code:#[flowVars.postCode]"/>
+            </http:request-builder>
+        </http:request>
+        <json:json-to-object-transformer returnClass="java.util.HashMap" doc:name="JSON to Object"/>
+        <logger message="#[payload.status]" level="INFO" doc:name="Logger"/>
+        <choice doc:name="Address Validation Result">
+            <when expression="#[payload.status == 'OK']">
+                <set-payload value="{ 
+  &quot;token&quot;:&quot;30001&quot;
+}" doc:name="Set Payload"/>
+            </when>
+            <otherwise>
+                <set-property propertyName="http.status" value="422" doc:name="Property"/>
+                <set-payload value="{  &quot;error&quot;: &quot;Invalid Address&quot; }" mimeType="application/json" doc:name="Set Payload"/>
+            </otherwise>
+        </choice>
+        
+<!--         <dw:transform-message doc:name="Transform Message" metadata:id="ba4036fc-be96-4760-b7c0-7f3ee975339b"> -->
+<!--             <dw:input-payload mimeType="application/java"/> -->
+<!--             <dw:input-variable doc:sample="sample_data/json.json" variableName="inputPayload"/> -->
+            <!-- dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+
+{
+	FirstName: payload.firstname,
+	LastName : payload.lastname,
+	MailingPostalCode : payload.postcode,
+	MailingState : payload.state,
+	MailingStreet: payload.street    
+}]]></dw:set-payload-->
+<!--         </dw:transform-message> -->
+<!--         <logger message="sf payload: #[payload]" level="INFO" doc:name="Logger"/> -->
+    </flow>
+</mule>
