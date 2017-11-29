@@ -55,7 +55,7 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
     </sub-flow>
     
     <sub-flow name="EnterUserDetailsSubFlow">
-       <sfdc:query-single config-ref="Salesforce" doc:name="Create Salesforce Contact" query="dsql:SELECT SecurityToken__c FROM Contact WHERE ((LastName = '#[flowVars.inputPayload.lastname]' AND MailingPostalCode = '#[flowVars.inputPayload.postcode]') AND FirstName = '#[flowVars.inputPayload.firstname]')">
+       <sfdc:query-single config-ref="Salesforce" doc:name="Check Salesforce Contact" query="dsql:SELECT SecurityToken__c FROM Contact WHERE ((LastName = '#[flowVars.inputPayload.lastname]' AND MailingPostalCode = '#[flowVars.inputPayload.postcode]') AND FirstName = '#[flowVars.inputPayload.firstname]')">
         </sfdc:query-single>
         <choice doc:name="Choice">
             <when expression="#[payload != null]">
@@ -97,7 +97,7 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
         <json:json-to-object-transformer doc:name="JSON to Object" returnClass="java.lang.Object"/>
         <set-variable variableName="symbol" value="#[payload.symbol]" doc:name="Set Symbol"/>
         <logger message="token is #[message.inboundProperties.get('authorization')] and symbol is #[flowVars.symbol]" level="INFO" doc:name="Logger"/>
-              <sfdc:query-single config-ref="Salesforce" doc:name="Create Salesforce Contact" query="dsql:SELECT LastName FROM Contact WHERE SecurityToken__c = '#[message.inboundProperties.get('authorization')]'">
+              <sfdc:query-single config-ref="Salesforce" doc:name="Get Salesforce Contact" query="dsql:SELECT LastName FROM Contact WHERE SecurityToken__c = '#[message.inboundProperties.get('authorization')]'">
         </sfdc:query-single>
         <choice doc:name="Choice">
             <when expression="#[payload == null]">

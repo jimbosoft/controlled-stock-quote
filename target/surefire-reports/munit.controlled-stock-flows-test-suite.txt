@@ -1,0 +1,8 @@
+SKIPPED - Test controlled-stock-flows-test-suite-post-success was Skipped.
+SKIPPED - Test controlled-stock-flows-test-suite-getQuote-success was Skipped.
+SUCCESS - Test controlled-stock-flows-test-suite-post:/register:application/json:controlled-stock-api-configTest finished Successfully.
+SUCCESS - Test controlled-stock-flows-test-suite-post:/getquote:application/json:controlled-stock-api-configTest finished Successfully.
+
+=============================================================================
+Tests run: 4 - Failures: 0 - Errors: 0 - Skipped: 2 - Time elapsed: 4.705 sec
+=============================================================================

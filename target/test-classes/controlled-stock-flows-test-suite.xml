@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:core="http://www.mulesoft.org/schema/mule/core" xmlns:mock="http://www.mulesoft.org/schema/mule/mock" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mock http://www.mulesoft.org/schema/mule/mock/current/mule-mock.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
+    <munit:config name="munit" doc:name="MUnit configuration"/>
+    <spring:beans>
+        <spring:import resource="classpath:controlled-stock-flows.xml"/>
+    </spring:beans>
+    <http:request-config name="HTTP_Request_Configuration1" protocol="HTTPS" host="localhost" port="8081" doc:name="HTTP Request Configuration"/>
+    <munit:test name="controlled-stock-flows-test-suite-post:/register:application/json:controlled-stock-api-configTest" description="Test">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Google Address Validator']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[{&quot;status&quot;: &quot;ZERO_RESULTS&quot;}]" mimeType="text/json"/>
+        </mock:when>
+        <munit:set payload="#[{&quot;firstname&quot;:&quot;Jim&quot;,&quot;lastname&quot;:&quot;Henson&quot;,&quot;street&quot;: &quot;36 Rushall St&quot;,&quot;postcode&quot;: &quot;3078&quot;,&quot;state&quot;: &quot;VIC&quot;}]" doc:name="Set Message"/>
+        <flow-ref name="post:/register:application/json:controlled-stock-api-config" doc:name="Flow-ref to post:/register:application/json:controlled-stock-api-config"/>
+        <munit:assert-true condition="#[message.outboundProperties['http.status'] == 422]" doc:name="Assert True"/>
+<!--         <munit:assert-payload-equals expectedValue="#[{&quot; error&quot;: &quot;Invalid Address&quot;}]" doc:name="Assert Payload"/> -->
+<!--         <http:request config-ref="HTTP_Request_Configuration1" path="/api/register" method="POST" doc:name="HTTP"/> -->
+<!--         <munit:assert-true condition="#[message.inboundProperties['http.status'] == 422]" doc:name="Assert True"/> -->
+    </munit:test>
+    <munit:test name="controlled-stock-flows-test-suite-post:/getquote:application/json:controlled-stock-api-configTest" description="Test">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="Get Salesforce Contact"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[null]"/>
+        </mock:when>
+        
+        <munit:set payload="#[{&quot;symbol&quot;:&quot;MSFT&quot;}]" doc:name="Set Message"/>
+        <flow-ref name="post:/getquote:application/json:controlled-stock-api-config" doc:name="Flow-ref to post:/getquote:application/json:controlled-stock-api-config"/>
+        <munit:assert-true message="Assert http status" condition="#[message.outboundProperties['http.status'] == 401]" doc:name="Assert True"/>
+    </munit:test>
+    <munit:test name="controlled-stock-flows-test-suite-getQuote-success" description="Test" ignore="true">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="Get Salesforce Contact"/>
+            </mock:with-attributes>
+            <mock:then-return payload="hello" mimeType="text/plain"/>
+        </mock:when>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="HTTP Get Quote"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[&quot;Success&quot;]"/>
+        </mock:when>
+        <munit:set payload="#[{&quot;symbol&quot;:&quot;MSFT&quot;}]" doc:name="Set Message"/>
+        <flow-ref name="post:/getquote:application/json:controlled-stock-api-config" doc:name="Flow-ref to post:/getquote:application/json:controlled-stock-api-config"/>
+        <munit:assert-true message="Assert http status" condition="#[message.outboundProperties['http.status'] == 200]" doc:name="Assert True"/>
+    </munit:test>
+    <munit:test name="controlled-stock-flows-test-suite-post-success" description="Test" ignore="true">
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Google Address Validator']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#['{&quot;status&quot;: &quot;OK&quot;, &quot;results&quot;: [  &quot;geometry&quot;: {&quot;location&quot;: {&quot;lat&quot; : 22} } ] }']" mimeType="text/json"/>
+        </mock:when>
+        <mock:when messageProcessor=".*:.*" doc:name="Mock">
+            <mock:with-attributes>
+                <mock:with-attribute name="doc:name" whereValue="#['Check Salesforce Contact']"/>
+            </mock:with-attributes>
+            <mock:then-return payload="#[SecurityToken__c=&quot;1234567&quot;]"/>
+        </mock:when>
+        <munit:set payload="#[{&quot;firstname&quot;:&quot;Jim&quot;,&quot;lastname&quot;:&quot;Henson&quot;,&quot;street&quot;: &quot;36 Rushall St&quot;,&quot;postcode&quot;: &quot;3078&quot;,&quot;state&quot;: &quot;VIC&quot;}]" doc:name="Set Message"/>
+        <flow-ref name="post:/register:application/json:controlled-stock-api-config" doc:name="Flow-ref to post:/register:application/json:controlled-stock-api-config"/>
+        <munit:assert-true condition="#[message.outboundProperties['http.status'] == 422]" doc:name="Assert True"/>
+<!--         <munit:assert-payload-equals expectedValue="#[{&quot; error&quot;: &quot;Invalid Address&quot;}]" doc:name="Assert Payload"/> -->
+<!--         <http:request config-ref="HTTP_Request_Configuration1" path="/api/register" method="POST" doc:name="HTTP"/> -->
+<!--         <munit:assert-true condition="#[message.inboundProperties['http.status'] == 422]" doc:name="Assert True"/> -->
+    </munit:test>
+    
+</mule>
