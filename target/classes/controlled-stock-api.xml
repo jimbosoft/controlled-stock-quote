@@ -4,7 +4,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
-    <http:listener-config name="controlled-stock-api-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration" protocol="HTTPS">
+    <http:listener-config name="controlled-stock-api-httpListenerConfig" host="0.0.0.0" port="8082" doc:name="HTTP Listener Configuration" protocol="HTTPS">
         <tls:context>
             <tls:key-store path="keystore.jks" password="password" keyPassword="password"/>
         </tls:context>
